@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='key-management-styles.css') }}">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #1e3d59;
+            color: #f0f0f0;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #123;
+            padding: 10px 20px;
+        }
+        .header .nav-buttons {
+            display: flex;
+            gap: 10px;
+            margin: 0 auto;
+        }
+        .header .nav-buttons a {
+            color: #fff;
+            text-decoration: none;
+            padding: 10px 20px;
+            background-color: #4678a1;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+        .header .nav-buttons a:hover {
+            background-color: #3a6b90;
+        }
+        .login-button {
+            background-color: #28a745;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            border-radius: 5px;
+            text-decoration: none;
+        }
+        .logout-button {
+            background-color: #ff4d4d;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            border-radius: 5px;
+            text-decoration: none;
+        }
+        .admin-button {
+            background-color: #6c757d;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            border-radius: 5px;
+            text-decoration: none;
+        }
+        .container {
+            width: 80%;
+            margin: 20px auto;
+            background-color: #2b4d6f;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.5);
+            text-align: center;
+            flex: 1;
+        }
+        h1 {
+            color: #6dcff6;
+        }
+        p {
+            color: #ccc;
+        }
+        .content-section {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+        }
+        .content-section .content-box {
+            flex: 1 1 calc(33% - 20px);
+            background-color: #345d7e;
+            padding: 20px;
+            margin: 10px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.5);
+        }
+        .content-section .content-box h2 {
+            color: #6dcff6;
+        }
+        .content-section .content-box p {
+            color: #ccc;
+        }
+        .footer {
+            background-color: #123;
+            color: #f0f0f0;
+            text-align: center;
+            padding: 10px 20px;
+            margin-top: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="nav-buttons">
+            <a href="{{ url_for('home') }}">Home</a>
+            <a href="#">Contact</a>
+            <a href="{{ url_for('api_documentation') }}">API</a>
+            {% if session.get('is_admin') %}
+                <a href="{{ url_for('index') }}" class="admin-button">Admin</a>
+            {% endif %}
+        </div>
+        {% if session.get('logged_in') %}
+            <a href="{{ url_for('logout') }}" class="logout-button">Logout</a>
+        {% else %}
+            <a href="{{ url_for('login') }}" class="login-button">Login</a>
+        {% endif %}
+    </div>
+    <div class="container">
+        <h1>Welcome to the Key Authentication Service</h1>
+        <p>This service allows you to securely manage your license keys and authenticate users based on their hardware ID. Our API provides endpoints for registering users, verifying credentials, resetting hardware IDs, and more.</p>
+        <div class="content-section">
+            <div class="content-box">
+                <h2>Security</h2>
+                <p>Our service employs the latest encryption standards to ensure your data remains safe and secure. All interactions are protected with SSL/TLS, and we store passwords using strong hashing algorithms.</p>
+            </div>
+            <div class="content-box">
+                <h2>Performance</h2>
+                <p>Designed for high performance, our service can handle numerous authentication requests per second, ensuring smooth and efficient operations. We use optimized database queries and caching mechanisms to deliver fast responses.</p>
+            </div>
+            <div class="content-box">
+                <h2>Reliability</h2>
+                <p>Our infrastructure is built for reliability, with redundant systems and regular backups to ensure uptime and data integrity. We continuously monitor our systems to detect and mitigate any issues promptly.</p>
+            </div>
+        </div>
+    </div>
+    <div class="footer">
+        <p>&copy; 2024 Key Authentication Service. All rights reserved.</p>
+    </div>
+</body>
+</html>

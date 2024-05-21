@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>License Keys Management</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='key-management-styles.css') }}">
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const table = document.querySelector('table');
+            const headers = table.querySelectorAll('th');
+            const tbody = table.querySelector('tbody');
+            const searchInput = document.querySelector('#search-input');
+
+            headers.forEach((header, index) => {
+                header.addEventListener('click', () => {
+                    const rows = Array.from(tbody.querySelectorAll('tr'));
+                    const sortedRows = rows.sort((a, b) => {
+                        const aText = a.querySelectorAll('td')[index].textContent;
+                        const bText = b.querySelectorAll('td')[index].textContent;
+
+                        return aText.localeCompare(bText, 'en', {numeric: true});
+                    });
+
+                    while (tbody.firstChild) {
+                        tbody.removeChild(tbody.firstChild);
+                    }
+
+                    tbody.append(...sortedRows);
+                });
+            });
+
+            table.addEventListener('click', function(event) {
+                const target = event.target;
+                const row = target.closest('tr');
+                const licenseKey = row.querySelector('.license-key').textContent;
+
+                if (target.classList.contains('delete-button')) {
+                    fetch(`/delete_key/${licenseKey}`, {
+                        method: 'DELETE',
+                    }).then(response => {
+                        if (response.ok) {
+                            row.remove();
+                        } else {
+                            alert('Failed to delete the license key.');
+                        }
+                    });
+                } else if (target.classList.contains('reset-hwid-button')) {
+                    fetch(`/reset_hwid/${licenseKey}`, {
+                        method: 'POST',
+                    }).then(response => {
+                        if (response.ok) {
+                            row.querySelector('.hwid').textContent = '';
+                        } else {
+                            alert('Failed to reset the HWID.');
+                        }
+                    });
+                } else if (target.classList.contains('edit-time-button')) {
+                    const lengthCell = row.querySelector('.length');
+                    const daysLeftCell = row.querySelector('.days-left');
+                    const endsCell = row.querySelector('.ends');
+                    const newLength = prompt('Enter new validity length in days:', lengthCell.textContent);
+                    if (newLength && !isNaN(newLength)) {
+                        fetch(`/update_time/${licenseKey}`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({length: parseInt(newLength)})
+                        }).then(response => response.json())
+                          .then(data => {
+                              if (data.message === 'Validity length updated successfully') {
+                                  lengthCell.textContent = newLength;
+                                  // Calculate new end date and days left
+                                  const createdDate = new Date(row.querySelector('.created').textContent);
+                                  const newEndDate = new Date(createdDate);
+                                  newEndDate.setDate(newEndDate.getDate() + parseInt(newLength));
+                                  const daysLeft = Math.ceil((newEndDate - new Date()) / (1000 * 60 * 60 * 24));
+                                  endsCell.textContent = newEndDate.toISOString().split('T')[0];
+                                  daysLeftCell.textContent = daysLeft;
+                              } else {
+                                  alert('Failed to update the validity length.');
+                              }
+                          });
+                    }
+                }
+            });
+
+            // Handle form submission for generating keys
+            const generateKeysForm = document.querySelector('#generate-keys-form');
+            generateKeysForm.addEventListener('submit', function(event) {
+                event.preventDefault();
+
+                const numberOfKeys = document.querySelector('#number_of_keys').value;
+                const keyLength = document.querySelector('#key_length').value;
+                const validityLength = document.querySelector('#validity_length').value;
+
+                fetch('/generate_keys', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        number_of_keys: parseInt(numberOfKeys),
+                        key_length: parseInt(keyLength),
+                        validity_length: parseInt(validityLength)
+                    })
+                }).then(response => response.json())
+                  .then(data => {
+                      if (data.success) {
+                          alert(data.message);
+                          location.reload();  // Reload the page to show new keys
+                      } else {
+                          alert(data.message);
+                      }
+                  });
+            });
+
+            // Filter table based on search input
+            searchInput.addEventListener('input', function() {
+                const filter = searchInput.value.toLowerCase();
+                const rows = tbody.querySelectorAll('tr');
+
+                rows.forEach(row => {
+                    const keyCell = row.querySelector('.license-key');
+                    if (keyCell) {
+                        const keyText = keyCell.textContent.toLowerCase();
+                        row.style.display = keyText.includes(filter) ? '' : 'none';
+                    }
+                });
+            });
+
+            // Check session validity periodically
+            setInterval(function() {
+                fetch('/check_session')
+                    .then(response => {
+                        if (response.status === 403) {
+                            alert('Session expired. You will be logged out.');
+                            window.location.href = '/logout';
+                        }
+                    })
+                    .catch(error => console.error('Error checking session:', error));
+            }, 60000); // Check every minute
+        });
+    </script>
+</head>
+<body>
+    <div class="header">
+        <div class="nav-buttons">
+            <a href="{{ url_for('home') }}">Home</a>
+            <a href="#">Contact</a>
+            <a href="{{ url_for('api_documentation') }}">API</a>
+            {% if session.get('is_admin') %}
+                <a href="{{ url_for('index') }}" class="admin-button">Admin</a>
+            {% endif %}
+        </div>
+        {% if session.get('logged_in') %}
+            <a href="{{ url_for('logout') }}" class="logout-button">Logout</a>
+        {% else %}
+            <a href="{{ url_for('login') }}" class="login-button">Login</a>
+        {% endif %}
+    </div>
+    <div class="container">
+        <h1>License Keys Management</h1>
+        {% if session.get('is_admin') %}
+        <form id="generate-keys-form" class="compact-form">
+            <div class="form-group">
+                <label for="number_of_keys">Number of Keys:</label>
+                <input type="number" id="number_of_keys" name="number_of_keys" required>
+            </div>
+            <div class="form-group">
+                <label for="key_length">Key Length:</label>
+                <input type="number" id="key_length" name="key_length" required>
+            </div>
+            <div class="form-group">
+                <label for="validity_length">Validity Length (days):</label>
+                <input type="number" id="validity_length" name="validity_length" required>
+            </div>
+            <button type="submit">Generate Keys</button>
+        </form>
+        {% endif %}
+        <h2>Generated Keys</h2>
+        <input type="text" id="search-input" placeholder="Search by key...">
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Key</th>
+                    <th class="created">Created</th>
+                    <th>Length (days)</th>
+                    <th class="ends">Ends</th>
+                    <th>Days Left</th>
+                    <th>Username</th>
+                    <th>Password</th>
+                    <th>HWID</th>
+                    <th>IP</th>
+                    <th>Authed</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for key in keys %}
+                <tr data-id="{{ key.id }}">
+                    <td>{{ key.id }}</td>
+                    <td class="license-key">{{ key.key }}</td>
+                    <td class="created">{{ key.created.strftime('%Y-%m-%d') if key.created else 'N/A' }}</td>
+                    <td class="length">{{ key.length }}</td>
+                    <td class="ends">{{ key.ends.strftime('%Y-%m-%d') if key.ends else 'N/A' }}</td>
+                    <td class="days-left">{{ key.days_left() if key.ends else 'N/A' }}</td>
+                    <td>{{ key.user.username if key.user else '' }}</td>
+                    <td>{{ '******' if key.user else '' }}</td>
+                    <td class="hwid">{{ key.hwid }}</td>
+                    <td>{{ key.ip }}</td>
+                    <td>{{ key.authed }}</td>
+                    <td>
+                        {% if session.get('is_admin') %}
+                        <button class="action-button edit-time-button">Edit Time</button>
+                        <button class="action-button reset-hwid-button">Reset HWID</button>
+                        <button class="delete-button">Delete</button>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <div class="footer">
+        <p>&copy; 2024 Key Authentication Service. All rights reserved.</p>
+    </div>
+</body>
+</html>
