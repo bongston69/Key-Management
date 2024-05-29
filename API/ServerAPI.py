@@ -12,7 +12,7 @@ import string
 import click
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = '9318447431938K'
+app.config['SECRET_KEY'] = ''
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///keys.db'
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SECURE'] = False
