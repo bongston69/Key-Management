@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Key Management</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='key-management-styles.css') }}">
+</head>
+<body>
+    <div class="header">
+        <div class="nav-buttons">
+            <a href="{{ url_for('home') }}">Home</a>
+            <a href="#">Contact</a>
+            <a href="{{ url_for('api_documentation') }}">API</a>
+            <a href="{{ url_for('key_management') }}">Dashboard</a>
+            {% if session.get('logged_in') %}
+                <a href="{{ url_for('logout') }}" class="logout-button">Logout</a>
+            {% else %}
+                <a href="{{ url_for('login') }}" class="login-button">Login</a>
+            {% endif %}
+        </div>
+    </div>
+    <div class="container">
+        <h1>Key and Database Management</h1>
+        <button id="back-to-database-selection" style="display: none;">Back to Database Selection</button>
+        <div id="database-management-section" class="section">
+            <h2>Your Databases</h2>
+            <form id="generate-database-form" class="compact-form">
+                <div class="form-group">
+                    <label for="database_name">Database Name:</label>
+                    <input type="text" id="database_name" name="database_name" required>
+                </div>
+                <button type="submit">Generate Database</button>
+            </form>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Database Name</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="databases-list">
+                        {% for db in databases %}
+                            <tr>
+                                <td>{{ db.id }}</td>
+                                <td>{{ db.name }}</td>
+                                <td class="button-group">
+                                    <button class="select-button" data-id="{{ db.id }}" data-name="{{ db.name }}">Select</button>
+                                    <button class="delete-button" data-id="{{ db.id }}">Delete</button>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <div id="keys-section" class="section" style="display: none;">
+            <div id="selected-database-details" style="display: none;">
+                <h2>Generate License Keys for <span id="selected-database-name"></span></h2>
+                <form id="generate-keys-form" class="compact-form">
+                    <div class="form-group">
+                        <label for="number_of_keys">Number of Keys:</label>
+                        <input type="number" id="number_of_keys" name="number_of_keys" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="key_length">Key Length:</label>
+                        <input type="number" id="key_length" name="key_length" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="validity_length">Validity Length (days):</label>
+                        <input type="number" id="validity_length" name="validity_length" required>
+                    </div>
+                    <button type="submit">Generate Keys</button>
+                </form>
+            </div>
+            <h2>License Keys</h2>
+            <input type="text" id="search-input" placeholder="Search by license key">
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Key</th>
+                            <th>Length</th>
+                            <th>Created</th>
+                            <th>Ends</th>
+                            <th>Days Left</th>
+                            <th>HWID</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="keys-list">
+                        <!-- Keys will be populated here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <div id="users-section" class="section" style="display: none;">
+            <h2>User Credentials</h2>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Username</th>
+                            <th>Password</th>
+                            <th>Admin</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="users-list">
+                        <!-- User credentials will be populated here -->
+                    </tbody>
+                </table>
+            </div>
+            <h2>Create New User</h2>
+            <form id="create-user-form" class="compact-form">
+                <div class="form-group">
+                    <label for="new_username">Username:</label>
+                    <input type="text" id="new_username" name="new_username" required>
+                </div>
+                <div class="form-group">
+                    <label for="new_password">Password:</label>
+                    <input type="password" id="new_password" name="new_password" required>
+                </div>
+                <div class="form-group">
+                    <label for="is_admin">Admin:</label>
+                    <select id="is_admin" name="is_admin">
+                        <option value="false">No</option>
+                        <option value="true">Yes</option>
+                    </select>
+                </div>
+                <button type="submit">Create User</button>
+            </form>
+        </div>
+    </div>
+    <div class="footer">
+        <p>&copy; 2024 Key Authentication Service. All rights reserved.</p>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const databaseTable = document.querySelector('#databases-list');
+            const keysSection = document.querySelector('#keys-section');
+            const usersSection = document.querySelector('#users-section');
+            const selectedDatabaseDetails = document.querySelector('#selected-database-details');
+            const selectedDatabaseName = document.querySelector('#selected-database-name');
+            const generateForm = document.querySelector('#generate-database-form');
+            const generateKeysForm = document.querySelector('#generate-keys-form');
+            const createUserForm = document.querySelector('#create-user-form');
+            const databaseManagementSection = document.querySelector('#database-management-section');
+            const backToDatabaseSelection = document.querySelector('#back-to-database-selection');
+
+            function loadDatabases() {
+                fetch('/list_databases')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            databaseTable.innerHTML = ''; // Clear existing content
+                            data.databases.forEach(db => {
+                                const row = document.createElement('tr');
+                                row.innerHTML = `
+                                    <td>${db.id}</td>
+                                    <td>${db.name}</td>
+                                    <td class="button-group">
+                                        <button class="select-button" data-id="${db.id}" data-name="${db.name}">Select</button>
+                                        <button class="delete-button" data-id="${db.id}">Delete</button>
+                                    </td>
+                                `;
+                                databaseTable.appendChild(row);
+                            });
+                            addEventListeners();
+                        }
+                    });
+            }
+
+            function addEventListeners() {
+                const selectButtons = document.querySelectorAll('.select-button');
+                const deleteButtons = document.querySelectorAll('.delete-button');
+
+                selectButtons.forEach(button => {
+                    button.addEventListener('click', function(event) {
+                        const dbId = event.target.getAttribute('data-id');
+                        const dbName = event.target.getAttribute('data-name');
+                        fetch(`/select_database/${dbId}`, {
+                            method: 'POST'
+                        }).then(response => response.json())
+                          .then(data => {
+                              if (data.success) {
+                                  alert(data.message);
+                                  loadDatabaseEntries();
+                                  selectedDatabaseDetails.style.display = 'block';
+                                  selectedDatabaseName.textContent = dbName;
+                                  keysSection.style.display = 'block';
+                                  databaseManagementSection.style.display = 'none';
+                                  backToDatabaseSelection.style.display = 'block';
+                                  if (dbId == 0) {
+                                      loadUserCredentials();
+                                      usersSection.style.display = 'block';
+                                  } else {
+                                      usersSection.style.display = 'none';
+                                  }
+                                  document.querySelector('.container').scrollIntoView({ behavior: 'smooth' });
+                              } else {
+                                  alert(data.message);
+                              }
+                          });
+                    });
+                });
+
+                deleteButtons.forEach(button => {
+                    button.addEventListener('click', function(event) {
+                        const dbId = event.target.getAttribute('data-id');
+                        fetch(`/delete_database/${dbId}`, {
+                            method: 'DELETE'
+                        }).then(response => response.json())
+                          .then(data => {
+                              if (data.success) {
+                                  alert(data.message);
+                                  loadDatabases();
+                              } else {
+                                  alert(data.message);
+                              }
+                          });
+                    });
+                });
+            }
+
+            generateForm.addEventListener('submit', function(event) {
+                event.preventDefault();
+                const dbName = document.querySelector('#database_name').value;
+                fetch('/generate_database', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({name: dbName})
+                }).then(response => response.json())
+                  .then(data => {
+                      if (data.success) {
+                          alert(data.message);
+                          loadDatabases();
+                      } else {
+                          alert(data.message);
+                      }
+                  });
+            });
+
+            generateKeysForm.addEventListener('submit', function(event) {
+                event.preventDefault();
+                const numberOfKeys = parseInt(document.querySelector('#number_of_keys').value);
+                const keyLength = parseInt(document.querySelector('#key_length').value);
+                const validityLength = parseInt(document.querySelector('#validity_length').value);
+                fetch('/generate_keys', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        number_of_keys: numberOfKeys,
+                        key_length: keyLength,
+                        validity_length: validityLength
+                    })
+                }).then(response => response.json())
+                  .then(data => {
+                      if (data.success) {
+                          alert(data.message);
+                          loadDatabaseEntries();  // Ensure keys are reloaded after generation
+                      } else {
+                          alert(data.message);
+                      }
+                  }).catch(error => {
+                      console.error("Error generating keys:", error);
+                  });
+            });
+
+            createUserForm.addEventListener('submit', function(event) {
+                event.preventDefault();
+                const newUsername = document.querySelector('#new_username').value;
+                const newPassword = document.querySelector('#new_password').value;
+                const isAdmin = document.querySelector('#is_admin').value === 'true';
+                fetch('/create_user', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        username: newUsername,
+                        password: newPassword,
+                        is_admin: isAdmin
+                    })
+                }).then(response => response.json())
+                  .then(data => {
+                      if (data.success) {
+                          alert(data.message);
+                          loadUserCredentials();
+                      } else {
+                          alert(data.message);
+                      }
+                  });
+            });
+
+            function loadDatabaseEntries() {
+                fetch('/fetch_database_entries')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            const keysList = document.querySelector('#keys-list');
+                            keysList.innerHTML = '';
+                            data.entries.forEach(entry => {
+                                const row = document.createElement('tr');
+                                row.innerHTML = `
+                                    <td class="license-key">${entry.key}</td>
+                                    <td class="length">${entry.length}</td>
+                                    <td class="created">${new Date(entry.created).toISOString().split('T')[0]}</td>
+                                    <td class="ends">${entry.ends ? new Date(entry.ends).toISOString().split('T')[0] : 'N/A'}</td>
+                                    <td class="days-left">${entry.ends ? Math.ceil((new Date(entry.ends) - new Date()) / (1000 * 60 * 60 * 24)) : 'N/A'}</td>
+                                    <td class="hwid">${entry.hwid || ''}</td>
+                                    <td class="button-group">
+                                        <button class="reset-hwid-button" data-id="${entry.id}">Reset HWID</button>
+                                        <button class="delete-button" data-id="${entry.id}">Delete</button>
+                                        <button class="edit-time-button" data-id="${entry.id}">Edit Validity Length</button>
+                                    </td>
+                                `;
+                                keysList.appendChild(row);
+                            });
+                            addKeyEventListeners();
+                        }
+                    }).catch(error => {
+                        console.error("Error loading database entries:", error);
+                    });
+            }
+
+            function loadUserCredentials() {
+                fetch('/fetch_user_credentials')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            const usersList = document.querySelector('#users-list');
+                            usersList.innerHTML = '';
+                            data.users.forEach(user => {
+                                const row = document.createElement('tr');
+                                row.innerHTML = `
+                                    <td>${user.id}</td>
+                                    <td>${user.username}</td>
+                                    <td>${user.password}</td>
+                                    <td>${user.is_admin ? 'Yes' : 'No'}</td>
+                                    <td class="button-group">
+                                        <button class="edit-user-button" data-id="${user.id}">Edit</button>
+                                        <button class="delete-user-button" data-id="${user.id}">Delete</button>
+                                    </td>
+                                `;
+                                usersList.appendChild(row);
+                            });
+                            addUserEventListeners();
+                        }
+                    });
+            }
+
+            function addKeyEventListeners() {
+                const resetHWIDButtons = document.querySelectorAll('.reset-hwid-button');
+                const deleteButtons = document.querySelectorAll('.delete-button');
+                const editTimeButtons = document.querySelectorAll('.edit-time-button');
+
+                resetHWIDButtons.forEach(button => {
+                    button.addEventListener('click', function(event) {
+                        const keyId = event.target.getAttribute('data-id');
+                        fetch(`/reset_hwid/${keyId}`, {
+                            method: 'POST'
+                        }).then(response => response.json())
+                          .then(data => {
+                              if (data.success) {
+                                  alert(data.message);
+                                  loadDatabaseEntries();
+                              } else {
+                                  alert(data.message);
+                              }
+                          });
+                    });
+                });
+
+                deleteButtons.forEach(button => {
+                    button.addEventListener('click', function(event) {
+                        const keyId = event.target.getAttribute('data-id');
+                        fetch(`/delete_key/${keyId}`, {
+                            method: 'DELETE'
+                        }).then(response => response.json())
+                          .then(data => {
+                              if (data.success) {
+                                  alert(data.message);
+                                  loadDatabaseEntries();
+                              } else {
+                                  alert(data.message);
+                              }
+                          });
+                    });
+                });
+
+                editTimeButtons.forEach(button => {
+                    button.addEventListener('click', function(event) {
+                        const keyId = event.target.getAttribute('data-id');
+                        const newValidityLength = prompt('Enter new validity length (days):');
+                        fetch(`/edit_validity/${keyId}`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({validity_length: newValidityLength})
+                        }).then(response => response.json())
+                          .then(data => {
+                              if (data.success) {
+                                  alert(data.message);
+                                  loadDatabaseEntries();
+                              } else {
+                                  alert(data.message);
+                              }
+                          });
+                    });
+                });
+            }
+
+            function addUserEventListeners() {
+                const editUserButtons = document.querySelectorAll('.edit-user-button');
+                const deleteUserButtons = document.querySelectorAll('.delete-user-button');
+
+                editUserButtons.forEach(button => {
+                    button.addEventListener('click', function(event) {
+                        const userId = event.target.getAttribute('data-id');
+                        const newUsername = prompt('Enter new username:');
+                        const newPassword = prompt('Enter new password:');
+                        fetch(`/edit_user/${userId}`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                username: newUsername,
+                                password: newPassword
+                            })
+                        }).then(response => response.json())
+                          .then(data => {
+                              if (data.success) {
+                                  alert(data.message);
+                                  loadUserCredentials();
+                              } else {
+                                  alert(data.message);
+                              }
+                          });
+                    });
+                });
+
+                deleteUserButtons.forEach(button => {
+                    button.addEventListener('click', function(event) {
+                        const userId = event.target.getAttribute('data-id');
+                        fetch(`/delete_user/${userId}`, {
+                            method: 'DELETE'
+                        }).then(response => response.json())
+                          .then(data => {
+                              if (data.success) {
+                                  alert(data.message);
+                                  loadUserCredentials();
+                              } else {
+                                  alert(data.message);
+                              }
+                          });
+                    });
+                });
+            }
+
+            backToDatabaseSelection.addEventListener('click', function() {
+                keysSection.style.display = 'none';
+                usersSection.style.display = 'none';
+                databaseManagementSection.style.display = 'block';
+                backToDatabaseSelection.style.display = 'none';
+            });
+
+            loadDatabases();
+        });
+    </script>
+</body>
+</html>

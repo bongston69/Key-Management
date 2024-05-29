@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='key-management-styles.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <div class="header">
+        <div class="nav-buttons">
+            <a href="{{ url_for('home') }}">Home</a>
+            <a href="#">Contact</a>
+            <a href="{{ url_for('api_documentation') }}">API</a>
+            <a href="{{ url_for('dashboard') }}">Dashboard</a>
+        </div>
+        <div>
+        {% if session.get('logged_in') %}
+            <a href="{{ url_for('logout') }}" class="logout-button">Logout</a>
+        {% else %}
+            <a href="{{ url_for('login') }}" class="login-button">Login</a>
+        {% endif %}
+        </div>
+    </div>
+    <div class="container">
+        <h1>User Dashboard</h1>
+        <form id="generate-database-form" class="compact-form">
+            <div class="form-group">
+                <label for="database_name">Database Name:</label>
+                <input type="text" id="database_name" name="database_name" required>
+            </div>
+            <button type="submit">Generate Database</button>
+        </form>
+        <h2>Managed Databases</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Database Name</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="databases-list">
+                <!-- Databases will be populated here -->
+            </tbody>
+        </table>
+    </div>
+    <div class="footer">
+        <p>&copy; 2024 Key Authentication Service. All rights reserved.</p>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const generateForm = document.querySelector('#generate-database-form');
+            const databasesList = document.querySelector('#databases-list');
+
+            function loadDatabases() {
+                fetch('/list_databases')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            databasesList.innerHTML = '';
+                            data.databases.forEach(db => {
+                                const row = document.createElement('tr');
+                                row.innerHTML = `
+                                    <td>${db.id}</td>
+                                    <td>${db.name}</td>
+                                    <td>
+                                        <button class="select-button" data-id="${db.id}">Select</button>
+                                        <button class="delete-button" data-id="${db.id}">Delete</button>
+                                    </td>
+                                `;
+                                databasesList.appendChild(row);
+                            });
+                            addEventListeners();
+                        }
+                    });
+            }
+
+            function addEventListeners() {
+                const selectButtons = document.querySelectorAll('.select-button');
+                const deleteButtons = document.querySelectorAll('.delete-button');
+
+                selectButtons.forEach(button => {
+                    button.addEventListener('click', function(event) {
+                        const dbId = event.target.getAttribute('data-id');
+                        fetch(`/select_database/${dbId}`, {
+                            method: 'POST'
+                        }).then(response => response.json())
+                          .then(data => {
+                              if (data.success) {
+                                  alert(data.message);
+                                  loadDatabases();
+                              }
+                          });
+                    });
+                });
+
+                deleteButtons.forEach(button => {
+                    button.addEventListener('click', function(event) {
+                        const dbId = event.target.getAttribute('data-id');
+                        fetch(`/delete_database/${dbId}`, {
+                            method: 'DELETE'
+                        }).then(response => response.json())
+                          .then(data => {
+                              if (data.success) {
+                                  alert(data.message);
+                                  loadDatabases();
+                              }
+                          });
+                    });
+                });
+            }
+
+            generateForm.addEventListener('submit', function(event) {
+                event.preventDefault();
+                const dbName = document.querySelector('#database_name').value;
+                fetch('/generate_database', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({name: dbName})
+                }).then(response => response.json())
+                  .then(data => {
+                      if (data.success) {
+                          alert(data.message);
+                          loadDatabases();
+                      }
+                  });
+            });
+
+            loadDatabases();
+        });
+    </script>
+</body>
+</html>

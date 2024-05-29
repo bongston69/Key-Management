@@ -4,22 +4,40 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Redirecting...</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='key-management-styles.css') }}">
 </head>
 <body>
-    <div class="flash-container">
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                <div class="flash-messages">
-                    {% for category, message in messages %}
-                        <div class="flash-message {{ category }}">
-                            <span class="flash-icon">{{ '✔️' if category == 'success' else '❌' }}</span>
-                            {{ message }}
-                        </div>
-                    {% endfor %}
-                </div>
+    <div class="header">
+        <div class="nav-buttons">
+            <a href="{{ url_for('home') }}">Home</a>
+            <a href="#">Contact</a>
+            <a href="{{ url_for('api_documentation') }}">API</a>
+            <a href="{{ url_for('key_management') }}">Dashboard</a>
+            {% if session.get('logged_in') %}
+                <a href="{{ url_for('logout') }}" class="logout-button">Logout</a>
+            {% else %}
+                <a href="{{ url_for('login') }}" class="login-button">Login</a>
             {% endif %}
-        {% endwith %}
+        </div>
+    </div>
+    <div class="container">
+        <div class="section">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <div class="flash-messages">
+                        {% for category, message in messages %}
+                            <div class="flash-message {{ category }}">
+                                <span class="flash-icon">{{ '✔️' if category == 'success' else '❌' }}</span>
+                                {{ message }}
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% endwith %}
+        </div>
+    </div>
+    <div class="footer">
+        <p>&copy; 2024 Key Authentication Service. All rights reserved.</p>
     </div>
     <script>
         setTimeout(function() {

@@ -5,116 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>API Documentation</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='key-management-styles.css') }}">
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #1e3d59;
-            color: #f0f0f0;
-            margin: 0;
-            padding: 0;
-            display: flex;
-            flex-direction: column;
-            min-height: 100vh;
-        }
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background-color: #123;
-            padding: 10px 20px;
-        }
-        .header .nav-buttons {
-            display: flex;
-            gap: 10px;
-            margin: 0 auto;
-        }
-        .header .nav-buttons a {
-            color: #fff;
-            text-decoration: none;
-            padding: 10px 20px;
-            background-color: #4678a1;
-            border-radius: 5px;
-            transition: background-color 0.3s;
-        }
-        .header .nav-buttons a:hover {
-            background-color: #3a6b90;
-        }
-        .login-button {
-            background-color: #28a745;
-            color: #fff;
-            border: none;
-            padding: 10px 20px;
-            cursor: pointer;
-            border-radius: 5px;
-            text-decoration: none;
-        }
-        .logout-button {
-            background-color: #ff4d4d;
-            color: #fff;
-            border: none;
-            padding: 10px 20px;
-            cursor: pointer;
-            border-radius: 5px;
-            text-decoration: none;
-        }
-        .admin-button {
-            background-color: #6c757d;
-            color: #fff;
-            border: none;
-            padding: 10px 20px;
-            cursor: pointer;
-            border-radius: 5px;
-            text-decoration: none;
-        }
-        .container {
-            width: 80%;
-            margin: 20px auto;
-            background-color: #2b4d6f;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.5);
-            flex: 1;
-        }
-        h1, h2 {
-            text-align: center;
-            color: #6dcff6;
-        }
-        .button-group {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-        .button-group button {
-            background-color: #4678a1;
-            color: #fff;
-            border: none;
-            padding: 10px 20px;
-            margin: 5px;
-            cursor: pointer;
-            border-radius: 5px;
-        }
-        .button-group button:hover {
-            background-color: #3a6b90;
-        }
-        .api-section {
-            display: none;
-        }
-        .api-section.active {
-            display: block;
-        }
-        pre {
-            background-color: #1e1e1e;
-            padding: 15px;
-            border-radius: 5px;
-            overflow-x: auto;
-        }
-        .footer {
-            background-color: #123;
-            color: #f0f0f0;
-            text-align: center;
-            padding: 10px 20px;
-            margin-top: auto;
-        }
-    </style>
 </head>
 <body>
     <div class="header">
@@ -122,39 +12,38 @@
             <a href="{{ url_for('home') }}">Home</a>
             <a href="#">Contact</a>
             <a href="{{ url_for('api_documentation') }}">API</a>
-            {% if session.get('is_admin') %}
-                <a href="{{ url_for('index') }}" class="admin-button">Admin</a>
+            <a href="{{ url_for('key_management') }}">Dashboard</a>
+            {% if session.get('logged_in') %}
+                <a href="{{ url_for('logout') }}" class="logout-button">Logout</a>
+            {% else %}
+                <a href="{{ url_for('login') }}" class="login-button">Login</a>
             {% endif %}
         </div>
-        {% if session.get('logged_in') %}
-            <a href="{{ url_for('logout') }}" class="logout-button">Logout</a>
-        {% else %}
-            <a href="{{ url_for('login') }}" class="login-button">Login</a>
-        {% endif %}
     </div>
     <div class="container">
         <h1>API Documentation</h1>
-        <div class="button-group">
-            <button onclick="showSection('register')">Register</button>
-            <button onclick="showSection('verify_user')">Verify User</button>
-            <button onclick="showSection('reset_hwid')">Reset HWID</button>
-            <button onclick="showSection('update_time')">Update Time</button>
-            <button onclick="showSection('delete_key')">Delete Key</button>
-            <button onclick="showSection('get_hwid')">Get HWID</button>
-            <button onclick="showSection('admin')">Admin Calls</button>
-        </div>
+        <div class="section">
+            <div class="button-group">
+                <button onclick="showSection('register')">Register</button>
+                <button onclick="showSection('verify_user')">Verify User</button>
+                <button onclick="showSection('reset_hwid')">Reset HWID</button>
+                <button onclick="showSection('update_time')">Update Time</button>
+                <button onclick="showSection('delete_key')">Delete Key</button>
+                <button onclick="showSection('get_hwid')">Get HWID</button>
+                <button onclick="showSection('admin')">Admin Calls</button>
+            </div>
 
-        <div id="register" class="api-section active">
-            <h2>POST /register</h2>
-            <p>Registers a new user and activates their license key.</p>
-            <pre>{
+            <div id="register" class="api-section active">
+                <h2>POST /register</h2>
+                <p>Registers a new user and activates their license key.</p>
+                <pre>{
     "username": "user1",
     "password": "pass1",
     "key": "license_key",
     "hwid": "hardware_id"
 }</pre>
-            <h3>Python Example</h3>
-            <pre><code>import requests
+                <h3>Python Example</h3>
+                <pre><code>import requests
 
 url = 'http://localhost:5000/register'
 data = {
@@ -165,18 +54,18 @@ data = {
 }
 response = requests.post(url, json=data)
 print(response.json())</code></pre>
-        </div>
+            </div>
 
-        <div id="verify_user" class="api-section">
-            <h2>POST /verify_user</h2>
-            <p>Verifies a user's credentials and hardware ID.</p>
-            <pre>{
+            <div id="verify_user" class="api-section">
+                <h2>POST /verify_user</h2>
+                <p>Verifies a user's credentials and hardware ID.</p>
+                <pre>{
     "username": "user1",
     "password": "pass1",
     "hwid": "hardware_id"
 }</pre>
-            <h3>Python Example</h3>
-            <pre><code>import requests
+                <h3>Python Example</h3>
+                <pre><code>import requests
 
 url = 'http://localhost:5000/verify_user'
 data = {
@@ -186,66 +75,67 @@ data = {
 }
 response = requests.post(url, json=data)
 print(response.json())</code></pre>
-        </div>
+            </div>
 
-        <div id="reset_hwid" class="api-section">
-            <h2>POST /reset_hwid/&lt;license_key&gt;</h2>
-            <p>Resets the hardware ID for the given license key.</p>
-            <h3>Python Example</h3>
-            <pre><code>import requests
+            <div id="reset_hwid" class="api-section">
+                <h2>POST /reset_hwid/&lt;license_key&gt;</h2>
+                <p>Resets the hardware ID for the given license key.</p>
+                <h3>Python Example</h3>
+                <pre><code>import requests
 
 url = 'http://localhost:5000/reset_hwid/license_key'
 response = requests.post(url)
 print(response.json())</code></pre>
-        </div>
+            </div>
 
-        <div id="update_time" class="api-section">
-            <h2>POST /update_time/&lt;license_key&gt;</h2>
-            <p>Updates the validity period for the given license key.</p>
-            <pre>{
+            <div id="update_time" class="api-section">
+                <h2>POST /update_time/&lt;license_key&gt;</h2>
+                <p>Updates the validity period for the given license key.</p>
+                <pre>{
     "length": 30
 }</pre>
-            <h3>Python Example</h3>
-            <pre><code>import requests
+                <h3>Python Example</h3>
+                <pre><code>import requests
 
 url = 'http://localhost:5000/update_time/license_key'
 data = {"length": 30}
 response = requests.post(url, json=data)
 print(response.json())</code></pre>
-        </div>
+            </div>
 
-        <div id="delete_key" class="api-section">
-            <h2>DELETE /delete_key/&lt;license_key&gt;</h2>
-            <p>Deletes the given license key.</p>
-            <h3>Python Example</h3>
-            <pre><code>import requests
+            <div id="delete_key" class="api-section">
+                <h2>DELETE /delete_key/&lt;license_key&gt;</h2>
+                <p>Deletes the given license key.</p>
+                <h3>Python Example</h3>
+                <pre><code>import requests
 
 url = 'http://localhost:5000/delete_key/license_key'
 response = requests.delete(url)
 print(response.json())</code></pre>
-        </div>
+            </div>
 
-        <div id="get_hwid" class="api-section">
-            <h2>GET /get_hwid</h2>
-            <p>Generates a new hardware ID.</p>
-            <h3>Python Example</h3>
-            <pre><code>import requests
+            <div id="get_hwid" class="api-section">
+                <h2>GET /get_hwid</h2>
+                <p>Generates a new hardware ID.</p>
+                <h3>Python Example</h3>
+                <pre><code>import requests
 
 url = 'http://localhost:5000/get_hwid'
 response = requests.get(url)
 print(response.json())</code></pre>
-        </div>
+            </div>
 
-        <div id="admin" class="api-section">
-            <h2>Admin API Calls</h2>
-            <p>List of API calls that require admin privileges.</p>
-            <ul>
-                <li><strong>GET /</strong>: Access the admin dashboard.</li>
-                <li><strong>POST /generate_keys</strong>: Generate license keys.</li>
-                <li><strong>POST /reset_hwid/&lt;license_key&gt;</strong>: Reset HWID.</li>
-                <li><strong>POST /update_time/&lt;license_key&gt;</strong>: Update license key validity period.</li>
-                <li><strong>DELETE /delete_key/&lt;license_key&gt;</strong>: Delete a license key.</li>
-            </ul>
+            <div id="admin" class="api-section">
+                <h2>Admin API Calls</h2>
+                <p>List of API calls that require admin privileges.</p>
+                <ul>
+                    <li><strong>GET /</strong>: Access the admin dashboard.</li>
+                    <li><strong>POST /generate_keys</strong>: Generate license keys.</li>
+                    <li><strong>POST /reset_hwid/&lt;license_key&gt;</strong>: Reset HWID.</li>
+                    <li><strong>POST /update_time/&lt;license_key&gt;</strong>: Update license key validity period.</li>
+                    <li><strong>DELETE /delete_key/&lt;license_key&gt;</strong>: Delete a license key.</li>
+                </ul>
+            </div>
         </div>
     </div>
     <div class="footer">

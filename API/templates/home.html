@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='key-management-styles.css') }}">
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Roboto', sans-serif;
             background-color: #1e3d59;
             color: #f0f0f0;
             margin: 0;
@@ -18,17 +18,17 @@
         }
         .header {
             display: flex;
-            justify-content: space-between;
+            justify-content: center;
             align-items: center;
             background-color: #123;
             padding: 10px 20px;
+            width: 100%;
         }
-        .header .nav-buttons {
+        .nav-buttons {
             display: flex;
             gap: 10px;
-            margin: 0 auto;
         }
-        .header .nav-buttons a {
+        .nav-buttons a {
             color: #fff;
             text-decoration: none;
             padding: 10px 20px;
@@ -36,10 +36,10 @@
             border-radius: 5px;
             transition: background-color 0.3s;
         }
-        .header .nav-buttons a:hover {
+        .nav-buttons a:hover {
             background-color: #3a6b90;
         }
-        .login-button {
+        .login-button, .logout-button {
             background-color: #28a745;
             color: #fff;
             border: none;
@@ -50,63 +50,102 @@
         }
         .logout-button {
             background-color: #ff4d4d;
-            color: #fff;
-            border: none;
-            padding: 10px 20px;
-            cursor: pointer;
-            border-radius: 5px;
-            text-decoration: none;
-        }
-        .admin-button {
-            background-color: #6c757d;
-            color: #fff;
-            border: none;
-            padding: 10px 20px;
-            cursor: pointer;
-            border-radius: 5px;
-            text-decoration: none;
         }
         .container {
-            width: 80%;
-            margin: 20px auto;
-            background-color: #2b4d6f;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.5);
-            text-align: center;
             flex: 1;
+            width: 90%;
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #2b4d6f;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
         }
-        h1 {
-            color: #6dcff6;
+        .hero {
+            background-color: #123; /* Darker blue background */
+            padding: 50px 20px;
+            text-align: center;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            transition: transform 0.3s, background-color 0.3s;
         }
-        p {
-            color: #ccc;
+        .hero:hover {
+            transform: translateY(-10px);
+            background-color: #26445b;
         }
-        .content-section {
+        .hero h1 {
+            color: #4a90e2;
+            font-size: 2.5em;
+            margin-bottom: 20px;
+        }
+        .hero p {
+            font-size: 1.2em;
+            line-height: 1.5;
+            color: #f0f0f0;
+            margin-bottom: 30px;
+        }
+        .features {
             display: flex;
             flex-wrap: wrap;
-            justify-content: space-between;
+            gap: 20px;
+            margin-bottom: 20px;
+            justify-content: center;
         }
-        .content-section .content-box {
-            flex: 1 1 calc(33% - 20px);
-            background-color: #345d7e;
+        .feature {
+            background-color: #123;
             padding: 20px;
-            margin: 10px;
             border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.5);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            width: 30%;
+            min-width: 250px;
+            text-align: center;
+            transition: transform 0.3s, background-color 0.3s;
         }
-        .content-section .content-box h2 {
-            color: #6dcff6;
+        .feature:hover {
+            transform: translateY(-10px);
+            background-color: #1a3a52;
         }
-        .content-section .content-box p {
-            color: #ccc;
+        .feature h2 {
+            color: #4a90e2;
+            margin-bottom: 15px;
+        }
+        .feature p {
+            color: #f0f0f0;
+        }
+        .cta {
+            text-align: center;
+            margin-top: 20px;
+        }
+        .cta button {
+            background-color: #4a90e2;
+            color: #fff;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 5px;
+            font-size: 1.2em;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        .cta button:hover {
+            background-color: #357ab7;
         }
         .footer {
             background-color: #123;
             color: #f0f0f0;
             text-align: center;
-            padding: 10px 20px;
+            padding: 15px 20px;
             margin-top: auto;
+        }
+        @media (max-width: 768px) {
+            .feature {
+                width: 45%;
+            }
+        }
+        @media (max-width: 480px) {
+            .feature {
+                width: 100%;
+            }
         }
     </style>
 </head>
@@ -116,32 +155,50 @@
             <a href="{{ url_for('home') }}">Home</a>
             <a href="#">Contact</a>
             <a href="{{ url_for('api_documentation') }}">API</a>
-            {% if session.get('is_admin') %}
-                <a href="{{ url_for('index') }}" class="admin-button">Admin</a>
+            {% if session.get('logged_in') %}
+                <a href="{{ url_for('key_management') }}">Dashboard</a>
+                <a href="{{ url_for('logout') }}" class="logout-button">Logout</a>
+            {% else %}
+                <a href="{{ url_for('login') }}" class="login-button">Login</a>
             {% endif %}
         </div>
-        {% if session.get('logged_in') %}
-            <a href="{{ url_for('logout') }}" class="logout-button">Logout</a>
-        {% else %}
-            <a href="{{ url_for('login') }}" class="login-button">Login</a>
-        {% endif %}
     </div>
     <div class="container">
-        <h1>Welcome to the Key Authentication Service</h1>
-        <p>This service allows you to securely manage your license keys and authenticate users based on their hardware ID. Our API provides endpoints for registering users, verifying credentials, resetting hardware IDs, and more.</p>
-        <div class="content-section">
-            <div class="content-box">
-                <h2>Security</h2>
-                <p>Our service employs the latest encryption standards to ensure your data remains safe and secure. All interactions are protected with SSL/TLS, and we store passwords using strong hashing algorithms.</p>
+        <div class="hero">
+            <h1>Welcome to SafeKey</h1>
+            <p>SafeKey provides a highly encrypted, user-friendly key authentication service. Our platform ensures that your keys are secure and easily managed, offering a robust solution for the community - all free of charge!</p>
+            <h2>Join SafeKey Today!</h2>
+            <p>Experience the best in key authentication with our user-friendly platform. Register now and start securing your keys with SafeKey.</p>
+            <button onclick="window.location.href='{{ url_for('register') }}'">Register Now</button>
+        </div>
+        <div class="features">
+            <div class="feature">
+                <h2>State-of-the-Art Encryption</h2>
+                <p>We use advanced encryption techniques to keep your keys secure, ensuring that your data is always protected against unauthorized access.</p>
             </div>
-            <div class="content-box">
-                <h2>Performance</h2>
-                <p>Designed for high performance, our service can handle numerous authentication requests per second, ensuring smooth and efficient operations. We use optimized database queries and caching mechanisms to deliver fast responses.</p>
+            <div class="feature">
+                <h2>User-Friendly Interface</h2>
+                <p>Our intuitive interface makes it easy to manage your keys. Whether you're generating, deleting, or modifying keys, our platform provides a seamless experience.</p>
             </div>
-            <div class="content-box">
-                <h2>Reliability</h2>
-                <p>Our infrastructure is built for reliability, with redundant systems and regular backups to ensure uptime and data integrity. We continuously monitor our systems to detect and mitigate any issues promptly.</p>
+            <div class="feature">
+                <h2>Community-Focused</h2>
+                <p>SafeKey is committed to supporting the community by offering our services free of charge. We believe in providing high-quality tools accessible to everyone.</p>
             </div>
+            <div class="feature">
+                <h2>Open Source</h2>
+                <p>Our platform is open source, allowing you to review, modify, and contribute to the code. We believe in transparency and collaborative development.</p>
+            </div>
+            <div class="feature">
+                <h2>Customer Support</h2>
+                <p>We offer 24/7 customer support to assist you with any issues or questions you may have. Our team is dedicated to ensuring your satisfaction.</p>
+            </div>
+            <div class="feature">
+                <h2>High Performance</h2>
+                <p>Designed for high performance, our service can handle numerous authentication requests per second, ensuring smooth and efficient operations.</p>
+            </div>
+        </div>
+        <div class="cta">
+            <button onclick="window.location.href='{{ url_for('key_management') }}'">Get Started</button>
         </div>
     </div>
     <div class="footer">

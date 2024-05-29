@@ -4,44 +4,58 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='auth-styles.css') }}">
 </head>
 <body>
-    <div class="login-container">
+    <div class="header">
+        <div class="nav-buttons">
+            <a href="{{ url_for('home') }}">Home</a>
+            <a href="#">Contact</a>
+            <a href="{{ url_for('api_documentation') }}">API</a>
+            {% if session.get('logged_in') %}
+                <a href="{{ url_for('key_management') }}">Dashboard</a>
+                <a href="{{ url_for('logout') }}" class="logout-button">Logout</a>
+            {% else %}
+                <a href="{{ url_for('login') }}" class="login-button">Login</a>
+            {% endif %}
+        </div>
+    </div>
+    <div class="container">
         <h1>Login</h1>
-        <form action="{{ url_for('login') }}" method="POST">
-            <div class="form-group">
-                <input type="text" id="username" name="username" required>
-                <label for="username">Username</label>
-            </div>
-            <div class="form-group password-group">
-                <input type="password" id="password" name="password" required>
-                <label for="password">Password</label>
-                <span class="toggle-password" onclick="togglePassword()">&#128065;</span>
-            </div>
-            <input type="hidden" id="hwid" name="hwid">
-            <button type="submit" class="login-button">Login</button>
-            {% with messages = get_flashed_messages(with_categories=true) %}
-                {% if messages %}
-                    <div class="flash-messages">
-                        {% for category, message in messages %}
-                            <div class="flash-message {{ category }}">
-                                <span class="flash-icon">{{ '✔️' if category == 'success' else '❌' }}</span>
-                                {{ message }}
-                            </div>
-                        {% endfor %}
-                    </div>
-                {% endif %}
-            {% endwith %}
-        </form>
+        <div class="section">
+            <form action="{{ url_for('login') }}" method="POST">
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" name="username" required>
+                </div>
+                <div class="form-group password-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" required>
+                    <span class="toggle-password" onclick="togglePassword()">&#128065;</span>
+                </div>
+                <button type="submit" class="login-button">Login</button>
+                <div class="register-link">
+                    <p>Don't have an account? <a href="{{ url_for('register') }}">Register here</a></p>
+                </div>
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        <div class="flash-messages">
+                            {% for category, message in messages %}
+                                <div class="flash-message {{ category }}">
+                                    <span class="flash-icon">{{ '✔️' if category == 'success' else '❌' }}</span>
+                                    {{ message }}
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                {% endwith %}
+            </form>
+        </div>
+    </div>
+    <div class="footer">
+        <p>&copy; 2024 Key Authentication Service. All rights reserved.</p>
     </div>
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Simulate getting the HWID from the software level via API
-            const hwid = 'SIMULATED_HWID'; // Replace with actual HWID logic
-            document.getElementById('hwid').value = hwid;
-        });
-
         function togglePassword() {
             const passwordField = document.getElementById('password');
             const type = passwordField.getAttribute('type') === 'password' ? 'text' : 'password';

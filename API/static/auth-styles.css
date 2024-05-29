@@ -1,6 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
 
-/* General Styles for Key Management */
+/* General Styles for Authentication */
 
 body, html {
     height: 100%;
@@ -44,7 +44,7 @@ body, html {
 .container {
     flex: 1;
     width: 90%;
-    max-width: 1200px;
+    max-width: 600px;
     margin: 20px auto;
     padding: 20px;
     display: flex;
@@ -84,7 +84,6 @@ label {
 
 input[type="text"],
 input[type="password"],
-input[type="number"],
 input[type="email"] {
     width: calc(100% - 30px);
     padding: 10px;
@@ -111,58 +110,59 @@ button:hover {
     background-color: #218838;
 }
 
-.table-container {
-    width: 100%;
-    overflow-x: auto;
+.toggle-password {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    color: #888;
 }
 
-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 20px;
+.toggle-password:hover {
+    color: #ccc;
 }
 
-th, td {
-    padding: 15px;
+.flash-messages {
+    margin: 10px 0;
     text-align: center;
-    border: 1px solid #ccc;
 }
 
-th {
+.flash-message {
+    display: inline-block;
+    padding: 10px 20px;
+    margin: 5px 0;
+    border-radius: 5px;
+}
+
+.flash-message.success {
     background-color: #4a90e2;
     color: #fff;
 }
 
-tr:nth-child(even) {
-    background-color: #3e4a5a;
-}
-
-.action-button {
-    background-color: #f0ad4e;
-    color: #fff;
-    border: none;
-    padding: 8px 12px;
-    cursor: pointer;
-    border-radius: 5px;
-    transition: background 0.3s;
-}
-
-.action-button:hover {
-    background-color: #ec971f;
-}
-
-.delete-button {
+.flash-message.danger {
     background-color: #d9534f;
     color: #fff;
-    border: none;
-    padding: 8px 12px;
-    cursor: pointer;
-    border-radius: 5px;
-    transition: background 0.3s;
 }
 
-.delete-button:hover {
-    background-color: #c9302c;
+.register-link, .login-link {
+    text-align: center;
+    margin-top: 20px;
+}
+
+.register-link p, .login-link p {
+    margin: 0;
+}
+
+.register-link a, .login-link a {
+    color: #4a90e2;
+    font-weight: bold;
+    text-decoration: none;
+    transition: color 0.3s;
+}
+
+.register-link a:hover, .login-link a:hover {
+    color: #fff;
 }
 
 .footer {
